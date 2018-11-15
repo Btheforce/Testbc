@@ -7,8 +7,10 @@
 global class BatchNPSRemainderEmailSend implements Database.Batchable<sObject>, Database.Stateful {
 
     public String query;
+    public Set<String> npsSurveySet;
     public Map<Id, String> npsFailedMap;
     public Integer totalProcessed;
+    public NPSBundleHelper helper; 
     
     
      //Initializer for all instance attributes
@@ -17,6 +19,19 @@ global class BatchNPSRemainderEmailSend implements Database.Batchable<sObject>, 
         npsFailedMap = new Map<Id, String>();
         
         totalProcessed = 0;
+        
+        helper = new NPSBundleHelper();
+        
+        npsSurveySet = new Set<String>();
+        
+        for(Survey__c sur :[SELECT Contact__r.Email 
+                        	FROM Survey__c 
+                        	WHERE NPSCampaignName__c = :System.Label.NPS_Campaign_Name
+                        	AND Survey_Sent_Date_Time__c >= :helper.getCurrentNpsStartDate() 
+                            AND Survey_Sent_Date_Time__c <= :helper.getCurrentNpsEndDate()]){
+                                
+            npsSurveySet.add(sur.Contact__r.Email);                    
+        }
     }
     
     
@@ -24,13 +39,14 @@ global class BatchNPSRemainderEmailSend implements Database.Batchable<sObject>, 
         
         initializer();
         
-        query =	' SELECT Id, Email, NPS_Send_Reminder__c, NPS_Reminder_Date__c, Do_not_send_NPS_Survey__c, MBAClientID__c '
+        query =	' SELECT Id, Email, NPSRecipient__c, NPS_Send_Reminder__c, NPS_Reminder_Date__c, Do_not_send_NPS_Survey__c, MBAClientID__c, '
+            +	' Last_NPS_Survey_Submitted_Date__c, Last_NPS_Survey_Sent_Date__c '	
             + 	' FROM Contact '
             + 	' WHERE NPSRecipient__c = true '
             +	' AND NPS_Send_Reminder__c = true '
-            +   ' AND NPS_Reminder_Date__c = today '
-            +	' AND Last_NPS_Survey_Submitted_Date__c = null '
-            +	' AND Do_not_send_NPS_Survey__c != true ';
+            +	' AND Do_not_send_NPS_Survey__c != true '
+            +   ' AND NPS_Reminder_Date__c = today ';
+           
     }
     
     global BatchNPSRemainderEmailSend(String outerQuery){
@@ -52,8 +68,18 @@ global class BatchNPSRemainderEmailSend implements Database.Batchable<sObject>, 
         //loop over the scope and filter down a unique nps list
         for(Contact cont: scope){
             
-            //this flag would trigger workflow email alert
-            cont.NPS_Send_Reminder__c = false;
+            if(!npsSurveySet.contains(cont.Email)){
+                //this flag would trigger workflow email alert
+            	cont.NPS_Send_Reminder__c = false;
+                npsSurveySet.add(cont.Email);
+            }
+            else{
+                cont.Do_not_send_NPS_Survey__c = true;
+                cont.NPS_Send_Reminder__c = false;
+                cont.NPS_Bundle__c = null;
+                cont.NPSRecipient__c = false;
+            }
+            
 
             lstConts.add(cont);    
         }
@@ -102,8 +128,9 @@ global class BatchNPSRemainderEmailSend implements Database.Batchable<sObject>, 
         Map<String, string> notify = new Map<String, String>();
         
         for(Internal_Email_Notification_Setting__mdt internal : [SELECT DeveloperName, Email__c FROM Internal_Email_Notification_Setting__mdt 
-                                                                  	 WHERE DeveloperName = 'Developer' 
-                                                                     AND Disabled__c != True]){
+                                                                 WHERE DeveloperName = 'Developer' 
+                                                                 AND Disabled__c != True]){
+                                                                     
             notify.put(internal.DeveloperName, internal.Email__c);
         } 
          

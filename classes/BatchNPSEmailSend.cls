@@ -29,10 +29,10 @@ global class BatchNPSEmailSend implements Database.Batchable<sObject>, Database.
         npsSurveySet = new Set<String>();
         
         for(Survey__c sur :[SELECT Contact__r.Email 
-                        FROM Survey__c 
-                        WHERE NPSCampaignName__c = :System.Label.NPS_Campaign_Name
-                        AND CreatedDate >= :helper.getCurrentNpsStartDate() 
-                            AND CreatedDate <= :helper.getCurrentNpsEndDate()]){
+                        	FROM Survey__c 
+                        	WHERE NPSCampaignName__c = :System.Label.NPS_Campaign_Name
+                        	AND Survey_Sent_Date_Time__c >= :helper.getCurrentNpsStartDate() 
+                            AND Survey_Sent_Date_Time__c <= :helper.getCurrentNpsEndDate()]){
                                 
             npsSurveySet.add(sur.Contact__r.Email);                    
         }
@@ -48,9 +48,12 @@ global class BatchNPSEmailSend implements Database.Batchable<sObject>, Database.
         npsBundles = new List<NPS_Bundle__c>();
         //Get first two NPS Bundles
        	npsBundles =  [SELECT Id, Send_Date__c, Next_Send_Date__c, Previous_Bundle__c,
-                                              Processed__c, Failed__c, Size__c, Active__c 
-                                                	FROM NPS_Bundle__c WHERE is_complete__c != true AND Send_Date__c >= TODAY
-                       								ORDER BY Send_Date__c ASC LIMIT 2]; 
+                       Processed__c, Failed__c, Size__c, Active__c 
+                       FROM NPS_Bundle__c 
+                       WHERE is_complete__c != true 
+                       AND Send_Date__c >= TODAY
+                       ORDER BY Send_Date__c ASC LIMIT 2]; 
+        
         activeBundle = npsBundles[0];
         
         nextBundle = npsBundles[1];
@@ -67,7 +70,7 @@ global class BatchNPSEmailSend implements Database.Batchable<sObject>, Database.
         
         initializer();
          
-		query =	' SELECT Id, Email, NPS_Bundle__c, NPS_Email_Eligible__c, Last_NPS_Survey_Sent_Date__c, Next_NPS_Survey_Date__c, ' 
+		query =	' SELECT Id, Email, NPSRecipient__c, NPS_Bundle__c, NPS_Email_Eligible__c, Last_NPS_Survey_Sent_Date__c, Next_NPS_Survey_Date__c, ' 
             + 	' NPS_Reminder_Date__c, Do_not_send_NPS_Survey__c, MBAClientID__c '
             + 	' FROM Contact '
             + 	' WHERE NPS_Bundle__r.Active__c = true '
@@ -148,6 +151,7 @@ global class BatchNPSEmailSend implements Database.Batchable<sObject>, Database.
             }
             else{
                 
+                cont.NPSRecipient__c = false;
                 cont.Do_not_send_NPS_Survey__c = true;
                 cont.NPS_Bundle__c = null;
                 

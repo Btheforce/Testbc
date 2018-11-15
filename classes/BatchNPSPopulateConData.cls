@@ -101,7 +101,7 @@ global class BatchNPSPopulateConData implements Database.Batchable<sObject>, Dat
         }
         
         //Calling Deduplication Batch
-        BatchNPSDeduplicateContact b = new BatchNPSDeduplicateContact(''); 
-		database.executebatch(b);
+        //BatchNPSDeduplicateContact b = new BatchNPSDeduplicateContact(''); 
+		//database.executebatch(b);
     }
 }

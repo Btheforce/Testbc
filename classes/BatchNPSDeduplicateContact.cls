@@ -47,6 +47,7 @@ global class BatchNPSDeduplicateContact implements Database.Batchable<sObject>, 
                 if(npsEmailsSet.contains(eachCon.email)){
                     eachCon.NPSRecipient__c = false;
                     eachCon.Do_not_send_NPS_Survey__c = true;
+                    eachCon.NPS_Bundle__c = null;
                     deactivateNPS.add(eachCon);
                 }else{
                     npsEmailsSet.add(eachCon.email);

@@ -26,8 +26,9 @@ global class BatchNPSBundleAllocation implements Database.Batchable<sObject>, Da
         npsFailedMap = new Map<Id, String>();
         
         //Get daily contact allocation custom metadata limit 
-        dailyLimit = (Integer) [SELECT MasterLabel, Batch_Size__c FROM Batch_Apex_Setting__mdt
-                           			 WHERE DeveloperName = 'NPS_Batch_Apex'].Batch_Size__c;
+        dailyLimit = (Integer) [SELECT MasterLabel, Batch_Size__c 
+                                FROM Batch_Apex_Setting__mdt
+                           		WHERE DeveloperName = 'NPS_Batch_Apex'].Batch_Size__c;
      
          npsActualEmailMap = new Map<String, Contact>();
         
@@ -156,6 +157,7 @@ global class BatchNPSBundleAllocation implements Database.Batchable<sObject>, Da
             }
             else{
                 
+                cont.NPSRecipient__c = false;
                 cont.Do_not_send_NPS_Survey__c = true;
             }
             
