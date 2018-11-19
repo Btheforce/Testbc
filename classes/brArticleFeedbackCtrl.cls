@@ -67,6 +67,7 @@ public with sharing class brArticleFeedbackCtrl {
         try {
             PKB_Article_Feedback_Deflection__c afd = new PKB_Article_Feedback_Deflection__c(
                     Author__c = articleFields.get('author'),
+                    Deflection__c = true,
                     Article_ID__c = articleFields.get('articleId'),
                     Article_Number__c = articleFields.get('articleNumber'),
                     Article_Title__c = articleFields.get('articleTitle'),
